@@ -311,6 +311,12 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 // ── Versturen naar SharePoint (via Netlify Function) ──────────────────────
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';   // relatief; werkt op de gedeployde Netlify-site
 
+<script>
+// ---- SharePoint / Power Automate ----
+// PLAK HIER DE VOLLEDIGE HTTP POST URL UIT DE TRIGGER
+// dus inclusief: &sp=...&sv=1.0&sig=...
+const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
+
 function bouwPayload(){
   return {
     Title: $('#m_project').value || '',
@@ -323,26 +329,42 @@ function bouwPayload(){
     Verslag: verslag()
   };
 }
-``
 
 async function naarSharepoint(btn){
   if(!checkVerplicht()) return;
+
   const orig = btn ? btn.innerHTML : '';
-  if(btn){ btn.disabled = true; btn.innerHTML = 'Versturen…'; }
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = 'Versturen...';
+  }
+
   try{
     const res = await fetch(SP_ENDPOINT, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(bouwPayload())
     });
-    if(!res.ok) throw new Error('status '+res.status);
-    toast('Naar SharePoint verstuurd · '+samenvatting());
+
+    if(!res.ok){
+      const txt = await res.text().catch(() => '');
+      throw new Error('status ' + res.status + (txt ? ' - ' + txt : ''));
+    }
+
+    toast('Naar SharePoint verstuurd · ' + samenvatting());
   }catch(err){
-    toast('Versturen mislukt — '+err.message, true);
+    toast('Versturen mislukt — ' + err.message, true);
+    console.error(err);
   }finally{
-    if(btn){ btn.disabled = false; btn.innerHTML = orig; }
+    if(btn){
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
   }
 }
+``
 
 function opslaan(){ if(!checkVerplicht())return; saved.unshift({project:$('#m_project').value,n:bevs.length,f:totFotos(),t:new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}); $('#saved').style.display='block'; $('#savedlist').innerHTML=saved.map(s=>`<div class="saved-item"><span class="dot"></span><b>${esc(s.project)}</b> — ${s.n} bevinding(en), ${s.f} foto's<span class="when">${s.t}</span></div>`).join(''); toast('Opgeslagen · '+samenvatting()); }
 function leeg(){ bevs=[]; ['m_project','m_adres','m_aannemer','m_opm'].forEach(id=>$('#'+id).value=''); $('#m_weer').value=''; render(); toast('Formulier leeggemaakt'); }
