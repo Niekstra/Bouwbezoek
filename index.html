@@ -312,28 +312,18 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1';   // relatief; werkt op de gedeployde Netlify-site
 
 function bouwPayload(){
-  const fotos = [];
-  bevs.forEach((b,i)=>{
-    b.fotos.forEach((f,fi)=>{
-      fotos.push({
-        naam: 'bev'+String(i+1).padStart(2,'0')+'_foto'+(fi+1)+'.jpg',
-        data: (f.url.split(',')[1]||'')          // base64 zonder de data:-prefix
-      });
-    });
-  });
   return {
-    project:      $('#m_project').value||'',
-    adres:        $('#m_adres').value||'',
-    datum:        $('#m_datum').value||'',
-    weer:         $('#m_weer').value||'',
-    opzichter:    $('#m_opzichter').value||'',
-    aannemer:     $('#m_aannemer').value||'',
-    algemeen:     $('#m_opm').value||'',
-    samenvatting: samenvatting(),
-    verslag:      verslag(),                      // volledig tekstverslag → meerregelig veld
-    fotos
+    Title: $('#m_project').value || '',
+    Adres: $('#m_adres').value || '',
+    Datum: $('#m_datum').value || '',
+    Opzichter: $('#m_opzichter').value || '',
+    Aannemer: $('#m_aannemer').value || '',
+    Algemeen: $('#m_opm').value || '',
+    Samenvatting: samenvatting(),
+    Verslag: verslag()
   };
 }
+``
 
 async function naarSharepoint(btn){
   if(!checkVerplicht()) return;
