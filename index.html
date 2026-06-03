@@ -310,7 +310,7 @@ function kopieerTekst(){ if(!checkVerplicht())return; navigator.clipboard.writeT
 function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').value||'Bouwbezoek'; const dat=$('#m_datum').value||''; const subject='Bouwbezoek – '+proj+(dat?' – '+dat:''); window.location.href='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(verslag()); toast('Concept geopend · vul je adres in en stuur'); }
 
 // ── Versturen naar SharePoint (via Netlify Function) ──────────────────────
-const SP_ENDPOINT = '/.netlify/functions/bouwbezoek';
+const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
 
 function bouwPayload(){
   const fotos = [];
