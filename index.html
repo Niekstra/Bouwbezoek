@@ -318,21 +318,24 @@ function bouwPayload(){
     b.fotos.forEach((f, fi) => {
       fotos.push({
         naam: 'bev' + String(i+1).padStart(2,'0') + '_foto' + (fi+1) + '.jpg',
-        data: (f.url.split(',')[1] || '')  // strip data: prefix
+        data: (f.url.split(',')[1] || '')
       });
     });
   });
+  const pdf = genPDF(true);                              // ← PDF als base64 ophalen
   return {
-    project:      $('#m_project').value || '',
-    adres:        $('#m_adres').value || '',
-    datum:        $('#m_datum').value || '',
-    weer:         $('#m_weer').value || '',
-    opzichter:    $('#m_opzichter').value || '',
-    aannemer:     $('#m_aannemer').value || '',
-    algemeen:     $('#m_opm').value || '',
-    samenvatting: samenvatting(),
-    verslag:      verslag(),
-    fotos:        fotos
+    project:         $('#m_project').value || '',
+    adres:           $('#m_adres').value || '',
+    datum:           $('#m_datum').value || '',
+    weer:            $('#m_weer').value || '',
+    opzichter:       $('#m_opzichter').value || '',
+    aannemer:        $('#m_aannemer').value || '',
+    algemeen:        $('#m_opm').value || '',
+    samenvatting:    samenvatting(),
+    verslag:         verslag(),
+    fotos:           fotos,
+    pdfBestandsnaam: pdf ? pdf.name   : '',              // ← nieuw
+    pdfBase64:       pdf ? pdf.base64 : ''               // ← nieuw
   };
 }
 
@@ -358,11 +361,11 @@ async function naarSharepoint(btn){
 function opslaan(){ if(!checkVerplicht())return; saved.unshift({project:$('#m_project').value,n:bevs.length,f:totFotos(),t:new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}); $('#saved').style.display='block'; $('#savedlist').innerHTML=saved.map(s=>`<div class="saved-item"><span class="dot"></span><b>${esc(s.project)}</b> — ${s.n} bevinding(en), ${s.f} foto's<span class="when">${s.t}</span></div>`).join(''); toast('Opgeslagen · '+samenvatting()); }
 function leeg(){ bevs=[]; ['m_project','m_adres','m_aannemer','m_opm'].forEach(id=>$('#'+id).value=''); $('#m_weer').value=''; render(); toast('Formulier leeggemaakt'); }
 
-function genPDF(){
+function genPDF(asBase64){                               // ← parameter toegevoegd
   if(!checkVerplicht())return;
   if(!(window.jspdf&&window.jspdf.jsPDF)){ toast('PDF-bibliotheek niet geladen — herlaad de pagina',true); return; }
   const { jsPDF }=window.jspdf;
-  const doc=new jsPDF({unit:'mm',format:'a4'});         // VERS document — elke export opnieuw
+  const doc=new jsPDF({unit:'mm',format:'a4'});
   const M=16, PW=210, PH=297, R=PW-M, CW=PW-2*M;
   const clay=[0,88,48], ink=[28,26,23], mut=[120,112,102], line=[210,201,184];
   let y=M;
@@ -390,7 +393,7 @@ function genPDF(){
 
   bevs.forEach((b,i)=>{
     ensure(20);
-    doc.setFillColor.apply(doc,PC[b.prio]); doc.rect(M,y-3.5,2,5,'F');           // priokleur
+    doc.setFillColor.apply(doc,PC[b.prio]); doc.rect(M,y-3.5,2,5,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor.apply(doc,ink);
     doc.text(String(i+1).padStart(2,'0')+'.  '+b.cat,M+5,y);
     doc.setFontSize(8); doc.setTextColor.apply(doc,PC[b.prio]); doc.text(PL[b.prio],R,y,{align:'right'}); y+=5.5;
@@ -403,13 +406,19 @@ function genPDF(){
     y+=2; doc.setDrawColor.apply(doc,line); doc.setLineWidth(.2); doc.line(M+5,y,R,y); y+=6;
   });
 
-  // footers op alle pagina's
+  // footers
   const n=doc.getNumberOfPages();
   for(let p=1;p<=n;p++){ doc.setPage(p); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,mut); doc.text('Concept — gegenereerd met Bouwbezoek-prototype',M,PH-8); doc.text('pagina '+p+' / '+n,R,PH-8,{align:'right'}); }
 
   const proj=($('#m_project').value||'bouwbezoek').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_')||'bouwbezoek';
   const dat=$('#m_datum').value||'';
-  doc.save('Bouwbezoek_'+proj+(dat?'_'+dat:'')+'.pdf');
+  const fname='Bouwbezoek_'+proj+(dat?'_'+dat:'')+'.pdf';
+
+  if(asBase64){                                          // ← nieuw: teruggeven i.p.v. opslaan
+    return { name: fname, base64: (doc.output('datauristring').split('base64,')[1] || '') };
+  }
+
+  doc.save(fname);                                       // ← bestaand: downloadknop blijft werken
   toast('PDF gemaakt · '+samenvatting());
 }
 
