@@ -311,6 +311,9 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 
 // ── Versturen naar SharePoint (via Power Automate HTTP-trigger) ───────────
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
+// ── Versturen naar SharePoint (via Power Automate HTTP-trigger) ───────────
+const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
+
 function bouwPayload(){
   const PRIO = { laag:'Laag', mid:'Middel', hoog:'Hoog' };
   
