@@ -313,33 +313,40 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
 function bouwPayload(){
   const PRIO = { laag:'Laag', mid:'Middel', hoog:'Hoog' };
-  // Gestructureerde bevindingen — de flow maakt hier 1 SharePoint-rij per stuk van
   const bevindingen = bevs.map((b, i) => ({
-    nummer:       i + 1,
-    categorie:    b.cat,
-    locatie:      b.loc || '',
+    nummer: i + 1,
+    categorie: b.cat,
+    locatie: b.loc || '',
     omschrijving: b.oms || '',
-    urgentie:     PRIO[b.prio] || b.prio,
-    actiehouder:  b.actie,
+    urgentie: PRIO[b.prio] || b.prio,
+    actiehouder: b.actie,
     hersteldatum: b.datum || '',
-    status:       'Open',
-    fotos:        b.fotos.map((f, fi) => ({
-      naam: 'bev' + String(i+1).padStart(2,'0') + '_foto' + (fi+1) + '.jpg',
-      data: (f.url.split(',')[1] || '')   // strip data: prefix
-    }))
+    status: 'Open'
   }));
+
+  // Flatten fotos naar top-level
+  const alleFotos = [];
+  bevs.forEach(b => {
+    b.fotos.forEach(f => {
+      alleFotos.push({
+        naam: f.naam || guid() + '.jpg',
+        data: f.url.split(',')[1] || ''
+      });
+    });
+  });
+
   return {
-    // Bezoekgegevens (gedeelde context — herhaal per rij in de flow)
-    project:      $('#m_project').value || '',
-    adres:        $('#m_adres').value || '',
-    datum:        $('#m_datum').value || '',
-    weer:         $('#m_weer').value || '',
-    opzichter:    $('#m_opzichter').value || '',
-    aannemer:     $('#m_aannemer').value || '',
-    algemeen:     $('#m_opm').value || '',
+    project: $('#m_project').value || '',
+    adres: $('#m_adres').value || '',
+    datum: $('#m_datum').value || '',
+    weer: $('#m_weer').value || '',
+    opzichter: $('#m_opzichter').value || '',
+    aannemer: $('#m_aannemer').value || '',
+    algemeen: $('#m_opm').value || '',
     samenvatting: samenvatting(),
-    verslag:      verslag(),       // volledig tekstverslag, handig als bijlage/back-up
-    bevindingen:  bevindingen      // ← 1 rij per bevinding
+    verslag: verslag(),
+    bevindingen: bevindingen,
+    fotos: alleFotos  // ← Top-level
   };
 }
 
