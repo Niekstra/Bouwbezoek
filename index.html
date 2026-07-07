@@ -347,9 +347,9 @@ function bouwPayload(){
     samenvatting: samenvatting(),
     verslag: verslag(),
     bevindingen: bevindingen,
-    fotos: fotos
+    fotos: fotos,
+    pdfBestandsnaam: ($('#m_project').value || 'bouwbezoek').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') + ($('#m_datum').value ? '_' + $('#m_datum').value : '') + '.pdf'
   };
-}
 
 async function naarSharepoint(btn){
   if(!checkVerplicht()) return;
