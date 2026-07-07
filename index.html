@@ -313,6 +313,7 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
 function bouwPayload(){
   const PRIO = { laag:'Laag', mid:'Middel', hoog:'Hoog' };
+  
   const bevindingen = bevs.map((b, i) => ({
     nummer: i + 1,
     categorie: b.cat,
@@ -324,13 +325,13 @@ function bouwPayload(){
     status: 'Open'
   }));
 
-  // Flatten fotos naar top-level
-  const alleFotos = [];
+  // Fotos top-level voor de stroom
+  const fotos = [];
   bevs.forEach(b => {
     b.fotos.forEach(f => {
-      alleFotos.push({
-        naam: f.naam || guid() + '.jpg',
-        data: f.url.split(',')[1] || ''
+      fotos.push({
+        naam: 'foto_' + Date.now() + '.jpg',
+        data: (f.url.split(',')[1] || '')
       });
     });
   });
@@ -346,7 +347,7 @@ function bouwPayload(){
     samenvatting: samenvatting(),
     verslag: verslag(),
     bevindingen: bevindingen,
-    fotos: alleFotos  // ← Top-level
+    fotos: fotos
   };
 }
 
