@@ -325,7 +325,6 @@ function bouwPayload(){
     status: 'Open'
   }));
 
-  // Fotos top-level voor de stroom
   const fotos = [];
   bevs.forEach(b => {
     b.fotos.forEach(f => {
@@ -350,6 +349,7 @@ function bouwPayload(){
     fotos: fotos,
     pdfBestandsnaam: ($('#m_project').value || 'bouwbezoek').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') + ($('#m_datum').value ? '_' + $('#m_datum').value : '') + '.pdf'
   };
+}
 
 async function naarSharepoint(btn){
   if(!checkVerplicht()) return;
