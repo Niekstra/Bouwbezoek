@@ -311,8 +311,6 @@ function mailConcept(){ if(!checkVerplicht())return; const proj=$('#m_project').
 
 // ── Versturen naar SharePoint (via Power Automate HTTP-trigger) ───────────
 const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
-// ── Versturen naar SharePoint (via Power Automate HTTP-trigger) ───────────
-const SP_ENDPOINT = 'https://defaultb5ee0326217b48ebbf863346b10442.0d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/5fdf6195e9d64d8f8927d7c3c2283ecd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Zevxhsxbi-PhbcmrVIAAGyWZnMLgtLJCnXXByzy_WH8';
 
 function bouwPayload(){
   const PRIO = { laag:'Laag', mid:'Middel', hoog:'Hoog' };
@@ -338,6 +336,52 @@ function bouwPayload(){
     });
   });
 
+  // PDF genereren
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:'a4'});
+  const M=16, PW=210, PH=297, R=PW-M, CW=PW-2*M;
+  const clay=[0,88,48], ink=[28,26,23], mut=[120,112,102], line=[210,201,184];
+  let y=M;
+  const ensure=h=>{ if(y+h>PH-18){ doc.addPage(); y=M; } };
+
+  if(logo){ const lw=46, lh=lw*(logo.h/logo.w); doc.addImage(logo.url,'PNG',M,y+1,lw,lh); }
+  doc.setTextColor.apply(doc,ink); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('Bouwbezoek',R,y+7,{align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,mut);
+  doc.text('Verslag · '+new Date().toLocaleDateString('nl-NL'),R,y+12,{align:'right'});
+  y+=18; doc.setDrawColor.apply(doc,clay); doc.setLineWidth(.6); doc.line(M,y,R,y); y+=8;
+
+  const meta=[['Project',$('#m_project').value||'—'],['Adres',$('#m_adres').value||'—'],['Datum',($('#m_datum').value||'—')+($('#m_weer').value?'   ('+$('#m_weer').value+')':'')],['Opzichter',$('#m_opzichter').value||'—'],['Aannemer / co-maker',$('#m_aannemer').value||'—']];
+  doc.setFontSize(10);
+  meta.forEach(([k,v])=>{ ensure(7); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,mut); doc.text(k.toUpperCase(),M,y); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,ink); doc.text(String(v),M+44,y); y+=6.5; });
+  if($('#m_opm').value){ y+=1.5; ensure(8); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,mut); doc.text('ALGEMEEN',M,y); y+=5; doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,ink); const w=doc.splitTextToSize($('#m_opm').value,CW); ensure(w.length*5); doc.text(w,M,y); y+=w.length*5; }
+  y+=4; doc.setDrawColor.apply(doc,line); doc.setLineWidth(.3); doc.line(M,y,R,y); y+=8;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc,ink);
+  doc.text('Bevindingen ('+bevs.length+')',M,y); y+=7;
+  const PC={laag:[107,119,133],mid:[181,129,31],hoog:[181,51,38]}, PL={laag:'LAAG',mid:'MIDDEL',hoog:'HOOG'};
+
+  bevs.forEach((b,i)=>{
+    ensure(20);
+    doc.setFillColor.apply(doc,PC[b.prio]); doc.rect(M,y-3.5,2,5,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor.apply(doc,ink);
+    doc.text(String(i+1).padStart(2,'0')+'.  '+b.cat,M+5,y);
+    doc.setFontSize(8); doc.setTextColor.apply(doc,PC[b.prio]); doc.text(PL[b.prio],R,y,{align:'right'}); y+=5.5;
+    if(b.loc){ doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor.apply(doc,clay); doc.text(b.loc,M+5,y); y+=5; }
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor.apply(doc,ink);
+    const w=doc.splitTextToSize(b.oms||'(geen omschrijving)',CW-5); ensure(w.length*5); doc.text(w,M+5,y); y+=w.length*5+1;
+    doc.setFontSize(8.5); doc.setTextColor.apply(doc,mut);
+    let mline='Actie: '+b.actie+(b.datum?'    Herstel vóór: '+b.datum:''); doc.text(mline,M+5,y); y+=5;
+    if(b.fotos.length){ const ph=30; let cx=M+5; ensure(ph+4); for(const f of b.fotos){ const pw=ph*(f.w/f.h); if(cx+pw>R){ y+=ph+3; cx=M+5; ensure(ph+4); } doc.addImage(f.url,'JPEG',cx,y,pw,ph); cx+=pw+3; } y+=ph+4; }
+    y+=2; doc.setDrawColor.apply(doc,line); doc.setLineWidth(.2); doc.line(M+5,y,R,y); y+=6;
+  });
+
+  const n=doc.getNumberOfPages();
+  for(let p=1;p<=n;p++){ doc.setPage(p); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,mut); doc.text('Concept — gegenereerd met Bouwbezoek',M,PH-8); doc.text('pagina '+p+' / '+n,R,PH-8,{align:'right'}); }
+
+  const pdfBlob = doc.output('blob');
+  const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+
   return {
     project: $('#m_project').value || '',
     adres: $('#m_adres').value || '',
@@ -350,7 +394,8 @@ function bouwPayload(){
     verslag: verslag(),
     bevindingen: bevindingen,
     fotos: fotos,
-    pdfBestandsnaam: ($('#m_project').value || 'bouwbezoek').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') + ($('#m_datum').value ? '_' + $('#m_datum').value : '') + '.pdf'
+    pdfBestandsnaam: ($('#m_project').value || 'bouwbezoek').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') + ($('#m_datum').value ? '_' + $('#m_datum').value : '') + '.pdf',
+    pdfBase64: pdfBase64
   };
 }
 
